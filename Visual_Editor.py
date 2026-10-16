@@ -1,5 +1,4 @@
-# Copyright (c) 2026 Dudka & Mishutka
-# Licensed under the MIT License. See LICENSE file for details.
+# -*- coding: utf-8 -*-
 import sys
 import os
 import csv
@@ -149,8 +148,7 @@ DEFAULT_FOOTPRINT_LIBRARY = {
 
 
 def get_lib_path():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(script_dir, LIB_FILENAME)
+    return os.path.join(get_app_dir(), LIB_FILENAME)
 
 
 def load_footprint_library():
@@ -1701,18 +1699,19 @@ class MainWindow(QMainWindow):
         act_save_cock = QAction("Сохранить как", self)
         act_reload_csv = QAction("Обновить CSV", self)
         act_reload_lib = QAction("Обновить библиотеки", self)
+        act_rotate_x5 = QAction("Повернуть все углы 45° на +90°", self)
         act_bottom_view = QAction("Bottom", self)
         act_bottom_view.setCheckable(True)
         self.act_bottom_view = act_bottom_view
         act_load_dxf = QAction("Загрузить DXF фон", self)
         act_open_lib_editor = QAction("Открыть Library Editor", self)
-
         self.toolbar.addAction(act_open)
         print("DXF button added")
         self.toolbar.addAction(act_save)
         self.toolbar.addAction(act_save_cock)
         self.toolbar.addAction(act_reload_csv)
         self.toolbar.addAction(act_reload_lib)
+        self.toolbar.addAction(act_rotate_x5)
         self.toolbar.addSeparator()
         self.toolbar.addAction(act_bottom_view)
         self.toolbar.addSeparator()
@@ -1725,6 +1724,7 @@ class MainWindow(QMainWindow):
         act_save_cock.triggered.connect(self.save_csv_cock)
         act_reload_csv.triggered.connect(self.reload_csv)
         act_reload_lib.triggered.connect(self.reload_library)
+        act_rotate_x5.triggered.connect(self.rotate_all_ending_in_5)
         act_bottom_view.toggled.connect(self.toggle_bottom_view)
         act_load_dxf.triggered.connect(self.load_board_dxf)
         act_open_lib_editor.triggered.connect(self.open_library_editor)
@@ -2787,6 +2787,21 @@ class MainWindow(QMainWindow):
         return None, None
 
     # ----- rotation handling -----
+
+    def rotate_all_ending_in_5(self):
+        """Повернуть на +90° только те компоненты, у которых CSV-угол оканчивается на 5."""
+        count = 0
+        for item in self.component_items:
+            try:
+                rot = float(item.csv_rotation)
+            except (ValueError, TypeError):
+                continue
+            # abs() → чтобы работали и отрицательные углы (-15, -25, ...)
+            # round() → отсекаем возможную плавающую точку 5.0000001
+            if abs(int(round(rot))) % 10 == 5:
+               self.change_component_rotation(item, item.csv_rotation + 90.0)
+               count += 1
+        self.statusBar().showMessage(f"Повёрнуто компонентов: {count}", 5000)
 
     def change_component_rotation(self, item: ComponentItem, new_angle: float):
         """Меняем CSV-угол компонента (по часовой – отрицательный)."""
