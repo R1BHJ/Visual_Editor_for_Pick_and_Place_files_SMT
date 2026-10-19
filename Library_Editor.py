@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Mishutka
-# Licensed under the MIT License. See LICENSE file for details.
 import sys
 import os
 import json
